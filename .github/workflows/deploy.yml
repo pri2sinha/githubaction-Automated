@@ -1,1 +1,50 @@
+name: Build and Deploy to Tomcat
 
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install Maven
+      run: sudo apt-get update && sudo apt-get install -y maven
+
+    - name: Build WAR file
+      run: mvn clean package
+
+    - name: Verify WAR file
+      run: ls target
+
+    - name: Copy WAR to Server
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        source: "target/*.war"
+        target: "/home/ubuntu/"
+
+    - name: Deploy WAR in Tomcat
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          sudo rm -rf /home/ubuntu/apache-tomcat-10.1.53/webapps/*.war
+          sudo cp /home/ubuntu/*.war /home/ubuntu/apache-tomcat-10.1.53/webapps/
+          sudo systemctl restart tomcat10 || true
