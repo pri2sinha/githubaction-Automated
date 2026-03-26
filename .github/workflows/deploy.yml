@@ -38,7 +38,7 @@ jobs:
         source: "target/*.war"
         target: "/home/ubuntu/"
 
-    - name: Deploy WAR in Tomcat
+    - name: Deploy WAR and Restart Tomcat
       uses: appleboy/ssh-action@v0.1.10
       with:
         host: ${{ secrets.SERVER_IP }}
@@ -47,4 +47,4 @@ jobs:
         script: |
           sudo rm -rf /home/ubuntu/apache-tomcat-10.1.53/webapps/*.war
           sudo cp /home/ubuntu/*.war /home/ubuntu/apache-tomcat-10.1.53/webapps/
-          sudo systemctl restart tomcat10 || true
+          sudo systemctl restart tomcat10
